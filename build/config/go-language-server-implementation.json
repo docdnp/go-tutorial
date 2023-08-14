@@ -1,0 +1,14 @@
+{
+  "LanguageServerManager": {
+    "language_servers": {
+      "go-language-server-implementation": {
+        "requires_documents_on_disk": false,
+        "version": 2,
+        "argv": ["/go/bin/gopls", "--mode","stdio"],
+        "languages": ["go"],
+        "mime_types": ["text/go", "text/x-go"],
+        "display_name": "Golang LSP server"
+      }
+    }
+  }
+}

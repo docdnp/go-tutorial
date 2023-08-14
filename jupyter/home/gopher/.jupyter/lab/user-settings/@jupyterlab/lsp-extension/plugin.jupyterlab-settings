@@ -1,0 +1,11 @@
+{
+    "activate": "on",
+    "setTrace": "off",
+    "logAllCommunication": false,
+    "languageServers": {
+        "go-language-server-implementation": {
+            "rank": 50,
+            "configuration": {}
+        }
+    }
+}

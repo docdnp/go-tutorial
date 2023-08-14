@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+
+
+start () {
+  docker run  --user "$(id -u)":"$(id -g)" \
+            --rm -d -p 8888:8888 \
+            --name gophernotes \
+            -v ./jupyter/home/gopher/notebooks:/home/gopher/notebooks \
+            -v ./jupyter/home/gopher/.local/share/jupyter:/home/gopher/.local/share/jupyter \
+            -v ./jupyter/home/gopher/.jupyter/lab:/home/gopher/.jupyter/lab \
+            gophernotes >&/dev/null \
+    || { 
+         read -p "Restart? [Enter=yes/n] " restart
+         [ -z "$restart" ] && {
+            echo "Restarting..." 
+            docker ps >&/dev/null
+            docker stop gophernotes >&/dev/null
+            sleep 1 ;\
+            exec -a gophernotes $0 start
+       }
+    }
+  
+  echo -n "Waiting .."
+  while ! [ -e ./jupyter/home/gopher/.local/share/jupyter/runtime/jpserver-1.json ] ; do echo -n .; sleep .5 ; done
+  echo
+
+  TOKEN=$(grep token ./jupyter/home/gopher/.local/share/jupyter/runtime/jpserver-1.json | perl -pe 's/.*?:\s+"|",//g')
+
+  echo " gophernotes are available here:
+
+    http://127.0.0.1:8888/doc/workspaces/auto-W/tree/notebooks/Golang%20Tutorial.ipynb?token=$TOKEN
+  "
+}
+
+stop () { docker stop gophernotes; }
+
+CMD="$1" 
+
+case "$CMD" in
+
+start) start;;
+stop) stop;;
+init) init;;
+*) start;;
+esac

@@ -1,0 +1,21 @@
+#!/usr/bin/perl -n
+$A.=$_; 
+
+END{
+    $A =~ s/ \\$                        # Line ending with a backslash
+             ( (?:\s+\#\#.*$)+ )        # $1: One or more comment lines: "    ## TEXT\n"
+             \s+ && (.+$)               # $2: only the command itself from a line starting with "   &&"
+           
+           / \n$1\nRUN$2 /gmx; 
+    $A=~s  /
+            (\n?)\n                     # $1: the newline of an optional empty line before the the previous comment line
+            [ \t]+                      # the blanks or tabs befor the ##
+            (\#\#.+)                    # the comment line
+           
+           /$1\n$2/gmx;
+    print $A
+}
+
+
+# As oneliner:
+# perl -ne '$A.=$_; END{ $A=~s /\\$((?:\s+##.*$)+)\s+&&(.+$)/\n$1\nRUN$2/gm;$A=~s/(\n?)\n[ \t]+(##.+)/$1\n$2/gm;print $A}'

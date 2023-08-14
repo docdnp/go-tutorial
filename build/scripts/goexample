@@ -1,0 +1,29 @@
+#!/bin/bash
+run-example () {
+    local head="${@:2}" splitter="========================="
+    splitter="$splitter$splitter$splitter$splitter$splitter"
+	printf "%.*s%s\nFile: %s\n%.*s\n%s\n%.*s\nOutput:\n\n", \
+        70 $splitter \
+        "$head" "$(echo "$1" | grep -Eo 'example.*')"\
+        70 $splitter \
+        "$(cat $1 | grep -v '^// Example')" \
+        70 $splitter
+	go run "$1"
+}
+
+goexample () {
+    local app="$1" example="$2"
+    [ -e "$app" ] || {
+        app=$(find ~/notebooks/examples -name main.go | grep "$app" | head -1)
+        [ -z "$app" ] && { echo "error: unknown app: $1"; return 1; }
+    } 
+    [ -z "$example" ] && {
+        example="$(grep -Eo 'Example:.*' $app)"
+    }
+    [ -e "$app" ] || { echo "error: unknown app: $1"; return 1; }
+    run-example "$app" "$example"
+}
+
+[ -n "$1" ] && {
+    goexample "$@"
+}

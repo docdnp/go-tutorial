@@ -1,0 +1,8 @@
+{
+    "modifierKey": "Alt",
+    "autoActivate": true,
+    "delay": 300,
+    "throttlerDelay": 50,
+    "cacheSize": 25,
+    "disable": false
+}
