@@ -53,7 +53,6 @@ RUN apk update \
     ## -------------------------------------------------------------------------------
     ## go tools
     ##    * gocomplete      bash completion for golang
-    ##    * gophernotes     REPL golang kernel for jupyter
     ##    * gonb            Non-REPL golang kernel for jupyter
     ##    * dlv             Debugger for golang
     ##    * go-outline      Outline viewer for golang
@@ -62,7 +61,6 @@ RUN apk update \
     ##    * goplay          Golang Playground
     && GOPATH=/go go install github.com/posener/complete/v2/gocomplete@latest \
     && GOPATH=/go go install github.com/janpfeifer/gonb@latest \
-    && GOPATH=/go go install github.com/gopherdata/gophernotes@latest \
     && GOPATH=/go go install github.com/go-delve/delve/cmd/dlv@latest \
     && GOPATH=/go go install github.com/ramya-rao-a/go-outline@latest \
     && GOPATH=/go go install github.com/haya14busa/goplay/cmd/goplay@latest \
