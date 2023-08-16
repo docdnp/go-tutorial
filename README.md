@@ -6,6 +6,12 @@ It is provided as a self-contained Docker image.
 
 ## Build
 
-```python
-docker build -f build/docker/Dockerfile -t gophernotes .
+```shell
+build/scripts/build
+```
+
+## Execute
+
+```shell
+docker run -i --rm thednp/go-tutorial
 ```
