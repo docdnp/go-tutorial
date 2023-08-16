@@ -89,18 +89,9 @@ RUN apk update \
         --shell "/bin/bash" \
         --uid "1000" \
         gopher \
-    ## -------------------------------------------------------------------------------
-    ## prepare "gopher" HOME: 
-    ##    * install go-jupyter-kernel from gophernotes 
-    && git clone -n --depth=1 --filter=tree:0 https://github.com/gopherdata/gophernotes.git gn \
-    && cd gn && git sparse-checkout set --no-cone kernel \
-    && git checkout \
     && mkdir -p /home/gopher/.local/share/jupyter/kernels \
-    && cp -r kernel /home/gopher/.local/share/jupyter/kernels/gophernotes \
-    && cd .. && rm -rf gn \
     ## -------------------------------------------------------------------------------
     ## prepare "gopher" HOME: 
-    ##    * install go-jupyter-kernel from gophernotes 
     ##    * setup bash only environment
     ##    * setup inputrc
     ##    * set password: "gopher" 
