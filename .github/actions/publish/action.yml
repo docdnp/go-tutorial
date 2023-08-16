@@ -18,23 +18,6 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Prepare checking tag name
-      uses: actions-ecosystem/action-regex-match@v2
-      id: regex-match
-      with:
-        text: ${{ github.ref_name }}
-        regex: '^v\d+\.\d+\.\d+$'
-
-    - name: Check tag name
-      id: check-tag-name
-      run: |
-        echo "Checking tag name: Did regex match? => [${{ steps.regex-match.outputs.match }}]";
-        export PATH=$PATH:${{ github.action_path }};
-        REMATCH="${{ steps.regex-match.outputs.match }}";
-        REFNAME="${{ github.ref_name }}";
-        [ -n "$REMATCH" ] || error "Tag '$REFNAME' has invalid format." 
-      shell: bash
-
     - name: Login to docker hub
       id: login-to-docker-hub
       run: |
@@ -47,19 +30,23 @@ runs:
 
     - name: Create 
       id: create
+      env:
+        KEEPLOG: /tmp/IMAGE
       run: |
         echo "Building containter image...";
         export PATH=$PATH:${{ github.action_path }};
-        KEEPLOG=/tmp/IMAGE build/scripts/build \
+        build/scripts/build \
           || error "Building docker image failed."
       shell: bash
 
     - name: Tag and push 
       id: tag-and-push
+      env:
+        IMAGE: /tmp/IMAGE
       run: |
         echo "Pushing image...";
         export PATH=$PATH:${{ github.action_path }};
-        IMAGE=$(cat /tmp/IMAGE);
+        IMAGE=$(cat $IMAGE);
         docker push $IMAGE \
           || error "Pushing $IMAGE to docker registry failed."
         [ -z "${{ inputs.tag }}" ] || {
