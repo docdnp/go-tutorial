@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+PROJECT=go-tutorial
+DOCKERIMG=thednp/go-tutorial
+DOCKERNAME=$PROJECT-\$USER
+TUTORIALNB=notebooks/GolangTutorial.ipynb
+
+usage () {
+cat <<EOF
+$PROJECT [command]
+
+ Commands
+  start         Start the tutorial.
+  version       Dump the tutorial's version.
+  cmd:fg        Dump docker command to start interactively in foreground.
+  cmd:bg        Dump docker commands to start in background and to display tutorial's URL.
+  script        Dump a script that simplifies using the container and helps also
+                to persist gonb notebooks and jupyter settings.
+
+ Recommended usage:
+  * Starting the tutorial in foreground. It prints the URL where it can be accessed: 
+
+      docker run -p 8888:8888 $DOCKERNAME -it --rm $DOCKERIMG start
+
+  * Starting the tutorial in background. A second call is necessary to see the URL
+    where the tutorial can be accessed:
+
+      docker run -p 8888:8888 $DOCKERNAME -d --rm $DOCKERIMG start
+      docker exec -it $DOCKERNAME url
+
+  * Get access to the convenience script:
+
+      docker run -it --rm $DOCKERIMG script > go-tutorial
+
+EOF
+}
+
+entry () {
+  jupyter lab --no-browser --ip=0.0.0.0 >&/dev/null &
+  local pid=$!
+  url; wait $pid
+}
+ 
+case "$1" in
+  script)  which go-tutorial | xargs cat;;
+  start)   entry;;
+  version) cat /etc/VERSION;;
+  cmd:bg)  echo    "docker run -p 8888:8888 $DOCKERNAME -d --rm $DOCKERIMG start";
+           echo -e "docker exec -i go-tutorial-\$USER url\n";;
+  cmd:fg)  echo "docker run -p 8888:8888 $DOCKERNAME -it --rm $DOCKERIMG start";;
+  *) usage ;;
+esac

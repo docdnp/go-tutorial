@@ -1,0 +1,83 @@
+#!/usr/bin/env bash
+PROJECT=go-tutorial
+DOCKERIMG=thednp/go-tutorial
+DOCKERNAME=$PROJECT-$USER
+DOCKEROPTS="--rm -p 8888:8888 --name $DOCKERNAME"
+DOCKERUSER="--user $(id -u):$(id -g)"
+GOPHERHOME=./$PROJECT.d
+TUTORIALNB=notebooks/GolangTutorial.ipynb
+
+usage () {
+cat <<EOF
+go-tutorial [command]
+
+ Commands
+  start       Start the tutorial.
+  stop        Stop the tutorial.
+  init-local  Create a local directory with all settings, the notebook and
+              the example scripts. If this directory exists, "start" will
+              use it automatically. 
+
+EOF
+}
+
+start-shell () { docker run -it $DOCKEROPTS --entrypoint /bin/bash $DOCKERIMG  start || restart "$@" ; }
+
+start-docker-standalone () {
+  docker run -d $DOCKEROPTS $DOCKERIMG start >&/dev/null \
+    || restart "$@"
+  docker exec -i $DOCKERNAME url
+}
+
+start-docker-local-includes () {
+    docker run $DOCKERUSER -d $DOCKEROPTS \
+            -v $GOPHERHOME/notebooks:/home/gopher/notebooks \
+            -v $GOPHERHOME/.local/share/jupyter:/home/gopher/.local/share/jupyter \
+            -v $GOPHERHOME/.jupyter/lab:/home/gopher/.jupyter/lab \
+               $DOCKERIMG start >&/dev/null \
+    || restart "$@"
+    echo "Mounted local home directory: $GOPHERHOME"
+    docker exec -i $DOCKERNAME url
+}
+
+init-local () {
+  mkdir -p ./$GOPHERHOME/notebooks && {
+    echo -n "Create temporary container: $DOCKERNAME: " \
+    && docker create $DOCKERUSER --name $DOCKERNAME $DOCKERIMG 2>&1 \
+      && echo Copying files... \
+      && docker cp -aq $DOCKERNAME:/home/gopher/.jupyter  ./$GOPHERHOME \
+      && docker cp -aq $DOCKERNAME:/home/gopher/.local    ./$GOPHERHOME \
+      && docker cp -aq $DOCKERNAME:/home/gopher/notebooks ./$GOPHERHOME \
+    && echo -n "Remove temporary container: " && docker rm $DOCKERNAME \
+    && echo Successfully created: ./$PROJECT && return 0
+  } 
+  echo -n "Remove temporary container: " && docker rm $DOCKERNAME
+  echo "Couldn't create local user directory. Cleaning up." && rm -rf ./$GOPHERHOME
+  return 1
+}
+
+restart () {
+    read -p "Restart? [Enter=yes/n] " restart
+    [ -z "$restart" ] && {
+      echo "Restarting..." 
+      stop; sleep 1
+      exec -a $PROJECT "$0" start "$@"
+    }
+}
+
+start () {
+    local start=start-docker-standalone
+    [ -d $GOPHERHOME ]          && start=start-docker-local-includes
+    [ "$1" == "--stand-alone" ] && start=start-docker-standalone
+    [ "$1" == "--shell" ]       && start=start-shell
+    $start "$@"
+}
+
+stop  () { docker kill $DOCKERNAME >&/dev/null && echo "Stopped $DOCKERNAME"; }
+
+case "$1" in
+  start) shift; start "$@";;
+  stop)  stop;;
+  init-local) init-local;;
+  *) usage ;;
+esac

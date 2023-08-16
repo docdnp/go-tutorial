@@ -1,0 +1,10 @@
+#!/bin/bash
+
+for i in {1..10} ; do
+    TOKEN=$(grep token $HOME/.local/share/jupyter/runtime/jpserver-*.json 2>/dev/null | perl -pe 's/.*?:\s+"|",//g')
+    sleep .1
+done
+echo "go-tutorial is available here:
+
+    http://127.0.0.1:8888/doc/workspaces/auto-W/tree/notebooks/GolangTutorial.ipynb?token=$TOKEN
+"

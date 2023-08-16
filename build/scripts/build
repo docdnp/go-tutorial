@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+PROJECT=go-tutorial
+DOCKERIMG=thednp/go-tutorial
+TUTORIALNB=notebooks/GolangTutorial.ipynbg
+GOPHERHOME=./$PROJECT.d
+VERSION=$(date +v%y.%j.%H%M)
+
+build () { 
+  echo $VERSION > VERSION
+  docker build -f build/Dockerfile -t $DOCKERIMG:$VERSION -t $DOCKERIMG:latest .
+  rm VERSION
+}
+
+store () { 
+  command -v jq >&/dev/null \
+    && [ -e $GOPHERHOME/$TUTORIALNB ] \
+      && cat $GOPHERHOME/$TUTORIALNB \
+         | jq '.cells[] |= del(.outputs,.execution_count)' | tee $TUTORIALNB
+}
+
+store
+build
