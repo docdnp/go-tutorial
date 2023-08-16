@@ -1,3 +1,4 @@
+[![Publish docker images on docker hub](https://github.com/docdnp/go-tutorial/actions/workflows/main.yml/badge.svg)](https://github.com/docdnp/go-tutorial/actions/workflows/main.yml)
 # gotutorial
 
 An interactive tutorial for go on basis of Jupyter Notebooks and gonb.
