@@ -56,15 +56,28 @@ build/scripts/build
 docker run -i --rm thednp/go-tutorial
 ```
 
-## Develop
+## Workflow when developing
 
 ```shell
 build/scripts/go-tutorial init-local
 build/scripts/go-tutorial start
 
-[... working in Jupyter ...]
-[... saving changes ...]
+# [... working in Jupyter ...]
+# [... saving changes ...]
 
-build/scripts/go-tutorial stop
 build/scripts/build
+build/scripts/go-tutorial start --docker    # open build result on port 8889
+
+# [... check changes ...]
+# [... working in Jupyter ...]
+# [... saving changes ...]
+
+build/scripts/build
+build/scripts/go-tutorial start --docker    # open build result on port 8889
+
+# [... check changes ...]
+
+build/scripts/go-tutorial stop --docker
+build/scripts/go-tutorial stop
+build/scripts/go-tutorial rm-local
 ```
