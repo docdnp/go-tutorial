@@ -12,11 +12,12 @@ cat <<EOF
 go-tutorial [command]
 
  Commands
-  start       Start the tutorial.
-  stop        Stop the tutorial.
-  init-local  Create a local directory with all settings, the notebook and
-              the example scripts. If this directory exists, "start" will
-              use it automatically. 
+  start         Start the tutorial.
+  stop          Stop the tutorial.
+  init-local    Create a local directory with all settings, the notebook and
+                the example scripts. If this directory exists, "start" will
+                use it automatically. 
+  rm-local      Remove local directory.
 
 EOF
 }
@@ -56,6 +57,8 @@ init-local () {
   return 1
 }
 
+rm-local () { rm -rf $GOPHERHOME; }
+
 restart () {
     read -p "Restart? [Enter=yes/n] " restart
     [ -z "$restart" ] && {
@@ -79,8 +82,9 @@ stop  () {
 }
 
 case "$1" in
-  start) shift; start "$@";;
-  stop)  stop;;
+  start)      shift; start "$@";;
+  stop)       stop;;
+  rm-local)   rm-local;;
   init-local) init-local;;
-  *) usage ;;
+  *)          usage ;;
 esac
