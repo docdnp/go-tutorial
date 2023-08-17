@@ -11,23 +11,29 @@ usage () {
 cat <<EOF
 go-tutorial [command]
 
- Commands
-  start         Start the tutorial.
-  stop          Stop the tutorial.
-  init-local    Create a local directory with all settings, the notebook and
-                the example scripts. If this directory exists, "start" will
-                use it automatically. 
-  rm-local      Remove local directory.
+  Control tutorial            (start, stop and enter either local or pure --docker tutorial)
+
+    start       [--docker]    Start the tutorial.
+    stop        [--docker]    Stop the tutorial.
+    url         [--docker]    Get the URL of the tutorial.
+    shell       [--docker]    Execute a shell environment in the running container.
+
+  Control local environment   (create or rm local environment)
+
+    init-local                Create a local directory with all settings, the notebook and
+                              the example scripts. If this directory exists, "start" will
+                              use it automatically. 
+    rm-local                  Remove local directory.
 
 EOF
 }
 
-start-shell () { docker run -it $DOCKEROPTS --entrypoint /bin/bash $DOCKERIMG  start || restart "$@" ; }
+in-docker () { [ "$1" == "--docker" ]; }
 
 start-docker-standalone () {
-  docker run -d $DOCKEROPTS $DOCKERIMG start >&/dev/null \
+  docker run -d ${DOCKEROPTS/8888/8889}-docker $DOCKERIMG start >&/dev/null \
     || restart "$@"
-  docker exec -i $DOCKERNAME url
+  url "$@"
 }
 
 start-docker-local-includes () {
@@ -38,7 +44,7 @@ start-docker-local-includes () {
                $DOCKERIMG start >&/dev/null \
     || restart "$@"
     echo "Mounted local home directory: $GOPHERHOME"
-    docker exec -i $DOCKERNAME url
+    url "$@"
 }
 
 init-local () {
@@ -63,27 +69,41 @@ restart () {
     read -p "Restart? [Enter=yes/n] " restart
     [ -z "$restart" ] && {
       echo "Restarting..." 
-      stop; sleep 1
+      stop "$@"; sleep 1
       exec -a $PROJECT "$0" start "$@"
     }
 }
 
 start () {
     local start=start-docker-standalone
-    [ -d $GOPHERHOME ]          && start=start-docker-local-includes
-    [ "$1" == "--stand-alone" ] && start=start-docker-standalone
-    [ "$1" == "--shell" ]       && start=start-shell
+    [ -d $GOPHERHOME ] && start=start-docker-local-includes
+    in-docker "$1" && start=start-docker-standalone
     $start "$@"
 }
 
 stop  () { 
-  docker kill $DOCKERNAME >&/dev/null && echo "Stopped $DOCKERNAME"
-  rm -rf $GOPHERHOME/.local/share/jupyter/runtime
+  local container=${1:-DOCKERNAME}
+  [ $container == "--docker" ] && container=$DOCKERNAME-docker
+  docker kill $container >&/dev/null && echo "Stopped $container"
+  [ $container == "$DOCKERNAME" ] && rm -rf $GOPHERHOME/.local/share/jupyter/runtime
+}
+
+call  () { 
+  local mode="$1" cmd="$2" container=${3:-DOCKERNAME}
+  [ $container == "--docker" ] && container=$DOCKERNAME-docker
+  $mode docker exec -it $container "$cmd"
+}
+shell   () { call exec bash "$@"; }
+url     () { call ""   url  "$@" | { 
+  in-docker "$1" && sed -re 's/8888/8889/' || tee
+  }
 }
 
 case "$1" in
   start)      shift; start "$@";;
-  stop)       stop;;
+  stop)       shift; stop  "$@";;
+  shell)      shift; shell "$@";;
+  url)        shift; url   "$@";;
   rm-local)   rm-local;;
   init-local) init-local;;
   *)          usage ;;
