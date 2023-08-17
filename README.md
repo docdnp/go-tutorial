@@ -1,5 +1,6 @@
-[![Publish docker images on docker hub](https://github.com/docdnp/go-tutorial/actions/workflows/main.yml/badge.svg)](https://github.com/docdnp/go-tutorial/actions/workflows/main.yml)
 # gotutorial
+
+[![Publish docker images on docker hub](https://github.com/docdnp/go-tutorial/actions/workflows/main.yml/badge.svg)](https://github.com/docdnp/go-tutorial/actions/workflows/main.yml)
 
 An interactive tutorial for go on basis of Jupyter Notebooks and gonb.
 
@@ -7,10 +8,10 @@ It is provided as a self-contained Docker image.
 
 ## Background
 
-A former employer, asked me to do a tech teaser on the Go programming language before I left the company. 
+A former employer, asked me to do a tech teaser on the Go programming language before I left the company.
 Earlier, rather PowerPoint-heavy tech teasers, had the big disadvantage that the learning effect was lower, but they were better suited to the character of a tech teaser.
 Especially learning a new programming language is much easier when you dig your hands right into the dirt and very short feedback loops move you forward.
-The idea of using a Jupyter notebook for such a format was born. 
+The idea of using a Jupyter notebook for such a format was born.
 Because it was clear that the effort of such a "project" would be bigger and therefore would be done in large parts of my free time, I understandably didn't want to just "give away" this work. Fortunately it became possible to create this Jupyter notebook.
 
 The first Jupyter kernel for Golang I used was [gophernotes](https://github.com/gopherdata/gophernotes#readme).
@@ -24,11 +25,12 @@ However, restarting a kernel and executing all cells takes a "relatively" long t
 One must be aware of this.
 
 Personally, it was important to me to keep the hurdle to get started with a new programming language as low as possible.
-Simply start a Docker container and get started right away. 
+Simply start a Docker container and get started right away.
 That was my idea.
 A mix of [Effective Go](https://go.dev/doc/effective_go) and the [Go Playground](https://go.dev/play/).
 Supplemented by a usable shell environment and many tools that are helpful in developing Go programs.
 Therefore, I envisioned that everything that belongs together would come together in a Docker image:
+
 * The tutorial itself
 * An installation of Jupyter-Lab
 * The Jupyter kernel for Go
