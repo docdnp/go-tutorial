@@ -73,7 +73,10 @@ start () {
     $start "$@"
 }
 
-stop  () { docker kill $DOCKERNAME >&/dev/null && echo "Stopped $DOCKERNAME"; }
+stop  () { 
+  docker kill $DOCKERNAME >&/dev/null && echo "Stopped $DOCKERNAME"
+  rm -rf $GOPHERHOME/.local/share/jupyter/runtime
+}
 
 case "$1" in
   start) shift; start "$@";;

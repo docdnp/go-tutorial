@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 PROJECT=go-tutorial
 DOCKERIMG=thednp/go-tutorial
-TUTORIALNB=notebooks/GolangTutorial.ipynbg
+TUTORIALNB=notebooks/GolangTutorial.ipynb
 GOPHERHOME=./$PROJECT.d
 VERSION=$(date +v%y.%j.%H%M)
 
@@ -9,10 +9,11 @@ build () {
   echo $VERSION > VERSION
   docker build -f build/Dockerfile -t $DOCKERIMG:$VERSION -t $DOCKERIMG:latest .
   rm VERSION
-  [ -n "KEEPLOG" ] && echo $DOCKERIMG:$VERSION > $KEEPLOG
+  [ -n "$KEEPLOG" ] && echo $DOCKERIMG:$VERSION > $KEEPLOG
 }
 
-store () { 
+store () {
+  echo $GOPHERHOME/$TUTORIALNB
   command -v jq >&/dev/null \
     && [ -e $GOPHERHOME/$TUTORIALNB ] \
       && cat $GOPHERHOME/$TUTORIALNB \
