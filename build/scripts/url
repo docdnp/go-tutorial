@@ -1,10 +1,15 @@
 #!/bin/bash
 
-for i in {1..10} ; do
-    TOKEN=$(grep token $HOME/.local/share/jupyter/runtime/jpserver-*.json 2>/dev/null | perl -pe 's/.*?:\s+"|",//g')
-    sleep .1
-done
-echo "go-tutorial is available here:
+token () { grep token $HOME/.local/share/jupyter/runtime/jpserver-*.json 2>/dev/null | perl -pe 's/.*?:\s+"|",//g'; }
 
-    http://127.0.0.1:8888/doc/workspaces/auto-W/tree/notebooks/GolangTutorial.ipynb?token=$TOKEN
-"
+waitloop () {
+    echo -n "Waiting for token.."
+    for i in {1..100} ; do TOKEN=$(token); [ -n "$(token)" ] && break; echo -n .; sleep .2; done
+    echo
+}
+
+URL="http://127.0.0.1:8888/doc/tree/notebooks/GolangTutorial.ipynb"
+
+sleep .5 && TOKEN="$(token)"
+[ -z "$(token)" ] && waitloop
+echo -e "go-tutorial is available here:\n\n\t$URL?token=$TOKEN\n";
