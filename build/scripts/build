@@ -3,6 +3,8 @@ PROJECT=go-tutorial
 DOCKERIMG=thednp/go-tutorial
 TUTORIALNB=notebooks/GolangTutorial.ipynb
 GOPHERHOME=./$PROJECT.d
+GOPHERWORKSPACE=$GOPHERHOME/.jupyter/lab/workspaces
+BUILDWORKSPACE=build/config/home.jupyter.lab/workspaces
 VERSION=$(date +v%y.%j.%H%M)
 
 build () { 
@@ -12,12 +14,21 @@ build () {
   [ -n "$KEEPLOG" ] && echo $DOCKERIMG:$VERSION > $KEEPLOG
 }
 
-store () {
-  echo $GOPHERHOME/$TUTORIALNB
+storeNotebook () {
   command -v jq >&/dev/null \
     && [ -e $GOPHERHOME/$TUTORIALNB ] \
       && cat $GOPHERHOME/$TUTORIALNB \
          | jq '.cells[] |= del(.outputs,.execution_count)' | tee $TUTORIALNB
+}
+
+storeWorkspaceSettings () {
+  ls -1t $GOPHERWORKSPACE/default* | tail -1 \
+      | xargs cat | tee $BUILDWORKSPACE/default*
+}
+
+store () {
+  storeNotebook
+  storeWorkspaceSettings
 }
 
 store
