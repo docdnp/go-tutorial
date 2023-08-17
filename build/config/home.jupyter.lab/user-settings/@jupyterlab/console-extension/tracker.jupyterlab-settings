@@ -17,7 +17,7 @@
         "fontFamily": null,
         "fontSize": null,
         "lineHeight": null,
-        "lineNumbers": false,
+        "lineNumbers": true,
         "lineWrap": "off",
         "matchBrackets": true,
         "readOnly": false,
