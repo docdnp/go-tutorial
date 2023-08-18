@@ -14,7 +14,7 @@ jobs:
       - name: Publish docker image
         uses: ./.github/actions/publish
         with:
-          custom_build_script: build/scripts/build all
+          custom_build_script: build/scripts/build all --pull
           docker_user:        ${{ secrets.DOCKER_USER }}
           docker_token:       ${{ secrets.DOCKER_TOKEN }}
 

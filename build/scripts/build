@@ -8,12 +8,20 @@ GOPHERWORKSPACE=$GOPHERHOME/.jupyter/lab/workspaces
 BUILDWORKSPACE=build/config/home.jupyter.lab/workspaces
 VERSION=$(date +v%y.%j.%H%M)
 
+pull () {
+  local img="$1"
+  for opt in "$@" ; do [ "$opt" == "--pull" ] && { docker pull $img; return; } ; done
+}
+
 build () { 
   [[ "$1" =~ ^all|deprecated$ ]] && {
+    pull $DOCKERIMGDEPR:latest $2
     docker build -f build/Dockerfile.obsolete -t $DOCKERIMGDEPR:latest .
     [ -n "$KEEPLOG" ] && echo $DOCKERIMGDEPR:latest >> $KEEPLOG
   }
   ! [[ "$1" =~ ^deprecated$ ]] && {
+    pull $DOCKERIMG:latest $1 $2
+
     echo $VERSION > VERSION
     docker build -f build/Dockerfile  -t $DOCKERIMG:latest \
       $([ -n "$1" ] && echo -t $DOCKERIMG:$VERSION || echo -n "") .
@@ -29,12 +37,12 @@ storeNotebook () {
   command -v jq >&/dev/null \
     && [ -e $GOPHERHOME/$TUTORIALNB ] \
       && cat $GOPHERHOME/$TUTORIALNB \
-         | jq '.cells[] |= del(.outputs,.execution_count)' | tee $TUTORIALNB
+         | jq '.cells[] |= del(.outputs,.execution_count)' | tee $TUTORIALNB >&/dev/null
 }
 
 storeWorkspaceSettings () {
   ls -1t $GOPHERWORKSPACE/default* | tail -1 \
-      | xargs cat | tee $BUILDWORKSPACE/default*
+      | xargs cat | tee $BUILDWORKSPACE/default* >&/dev/null
 }
 
 store () {
@@ -42,12 +50,13 @@ store () {
   storeWorkspaceSettings
 }
 
-[ -n "$1" ] && ! [[ "$1" =~ ^all|deprecated|with-version$ ]] && echo "\
-Usage: $0 [all|deprecated|with-version]
+[ -n "$1" ] && ! [[ "$1" =~ ^all|deprecated|with-version$|^--pull$ ]] && echo "\
+Usage: $0 [all|deprecated|with-version] [--pull]
 
   all           build also deprecated image
   deprecated    build deprecated image only
   with-version  build main image also with version tag
+  --pull        pull images before creation (can be used with or without command)
 " && exit 1
 
 store
