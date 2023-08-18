@@ -8,7 +8,7 @@ GOPHERWORKSPACE=$GOPHERHOME/.jupyter/lab/workspaces
 BUILDWORKSPACE=build/config/home.jupyter.lab/workspaces
 VERSION=$(date +v%y.%j.%H%M)
 
-set -e
+set -x
 
 build () { 
   [[ "$1" =~ ^all|deprecated$ ]] && {
