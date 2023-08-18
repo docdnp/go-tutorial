@@ -32,9 +32,10 @@ runs:
       id: create
       env:
         KEEPLOG: /tmp/IMAGE
+        PATH:    $PATH:${{ github.action_path }};
       run: |
         echo "Building containter images...";
-        export PATH=$PATH:${{ github.action_path }};
+        echo $PATH
         build/scripts/build all || error "Building docker images failed."
       shell: bash
 
