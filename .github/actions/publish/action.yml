@@ -1,19 +1,15 @@
 name: 'Publish docker image'
 description: 'This action publishes a docker image for valid tags'
 inputs:
-  push_also_tag:
-    description: 'Tag to be also pushed.'
-    required: false
+  custom_build_script:
+    description: 'Custom build script to use for building docker images (must write created images to $KEEPLOG)'
+    required: true
   docker_user:
     description: 'Username with push access to docker registry.'
     required: true
   docker_token:
     description: 'Token for user with push access to docker registry.'
     required: true
-  tag:
-    description: 'Upload image under additional tag (e.g. latest).'
-    default: ""
-    required: false
 
 runs:
   using: "composite"
@@ -22,7 +18,6 @@ runs:
       id: login-to-docker-hub
       run: |
         echo "Login to docker registry...";
-        export PATH=$PATH:${{ github.action_path }};
         echo "${{ inputs.docker_token }}" \
           | docker login -u "${{ inputs.docker_user }}" --password-stdin \
           || error "Login to docker registry failed."
@@ -35,7 +30,7 @@ runs:
         PATH:    /usr/bin:/bin:${{ github.action_path }}
       run: |
         echo "Building containter images...";
-        build/scripts/build all || error "Building docker images failed."
+        ${{ input.custom_build_script }} || error "Building docker images failed."
       shell: bash
 
     - name: Push 
