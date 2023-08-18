@@ -26,7 +26,8 @@ runs:
     - name: Create Docker Cacha Storage Backend
       run: |
         docker buildx create --use --driver=docker-container
-        
+      shell: bash
+    
     - name: Create 
       id: create
       env:
