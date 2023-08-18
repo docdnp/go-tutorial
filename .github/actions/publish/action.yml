@@ -30,7 +30,7 @@ runs:
         PATH:    /usr/bin:/bin:${{ github.action_path }}
       run: |
         echo "Building containter images...";
-        ${{ input.custom_build_script }} || error "Building docker images failed."
+        ${{ inputs.custom_build_script }} || error "Building docker images failed."
       shell: bash
 
     - name: Push 
