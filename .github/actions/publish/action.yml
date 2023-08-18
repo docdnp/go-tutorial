@@ -26,7 +26,7 @@ runs:
     - name: Create 
       id: create
       env:
-        KEEPLOG: /tmp/IMAGE
+        KEEPLOG: /tmp/IMAGES
         PATH:    /usr/bin:/bin:${{ github.action_path }}
       run: |
         echo "Building containter images...";
@@ -36,7 +36,7 @@ runs:
     - name: Push 
       id: push
       env:
-        IMAGE: /tmp/IMAGE
+        IMAGE: /tmp/IMAGES
         PATH:    /usr/bin:/bin:${{ github.action_path }}
       run: |
         for img in $(cat $IMAGE) ; do

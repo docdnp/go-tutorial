@@ -41,7 +41,7 @@ storeNotebook () {
 }
 
 storeWorkspaceSettings () {
-  ls -1t $GOPHERWORKSPACE/default* | tail -1 \
+  ls -1t $GOPHERWORKSPACE/default* >&/dev/null | tail -1 \
       | xargs cat | tee $BUILDWORKSPACE/default* >&/dev/null
 }
 
