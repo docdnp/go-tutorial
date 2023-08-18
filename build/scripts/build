@@ -19,7 +19,7 @@ build () {
     echo $VERSION > VERSION
     docker build -f build/Dockerfile -t $DOCKERIMG:$VERSION   -t $DOCKERIMG:latest .
     rm VERSION
-    [ -n "$KEEPLOG" ] && {
+    [ -z "$KEEPLOG" ] || {
       echo $DOCKERIMG:$VERSION >> $KEEPLOG
       echo $DOCKERIMG:latest   >> $KEEPLOG
     }
