@@ -13,9 +13,10 @@ build () {
     docker build -f build/Dockerfile.obsolete -t $DOCKERIMGDEPR:latest .
     [ -n "$KEEPLOG" ] && echo $DOCKERIMGDEPR:latest >> $KEEPLOG
   }
-  ! [[ "$1" =~ ^deprecated$   ]] && {
+  ! [[ "$1" =~ ^deprecated$ ]] && {
     echo $VERSION > VERSION
-    docker build -f build/Dockerfile -t $DOCKERIMG:$VERSION   -t $DOCKERIMG:latest .
+    docker build -f build/Dockerfile  -t $DOCKERIMG:latest \
+      $([ -n "$1" ] && echo -t $DOCKERIMG:$VERSION || echo -n "") .
     rm VERSION
     [ -z "$KEEPLOG" ] || {
       echo $DOCKERIMG:$VERSION >> $KEEPLOG
@@ -41,11 +42,12 @@ store () {
   storeWorkspaceSettings
 }
 
-[ -n "$1" ] && ! [[ "$1" =~ ^all|deprecated$ ]] && echo "\
-Usage: $0 [all|deprecated]
+[ -n "$1" ] && ! [[ "$1" =~ ^all|deprecated|with-version$ ]] && echo "\
+Usage: $0 [all|deprecated|with-version]
 
   all           build also deprecated image
   deprecated    build deprecated image only
+  with-version  build main image also with version tag
 " && exit 1
 
 store
