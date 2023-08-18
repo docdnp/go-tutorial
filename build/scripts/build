@@ -1,17 +1,29 @@
 #!/usr/bin/env bash
 PROJECT=go-tutorial
 DOCKERIMG=thednp/go-tutorial
+DOCKERIMGDEPR=thednp/gotutorial
 TUTORIALNB=notebooks/GolangTutorial.ipynb
 GOPHERHOME=./$PROJECT.d
 GOPHERWORKSPACE=$GOPHERHOME/.jupyter/lab/workspaces
 BUILDWORKSPACE=build/config/home.jupyter.lab/workspaces
 VERSION=$(date +v%y.%j.%H%M)
 
+set -e
+
 build () { 
-  echo $VERSION > VERSION
-  docker build -f build/Dockerfile -t $DOCKERIMG:$VERSION -t $DOCKERIMG:latest .
-  rm VERSION
-  [ -n "$KEEPLOG" ] && echo $DOCKERIMG:$VERSION > $KEEPLOG
+  [[ "$1" =~ ^all|deprecated$ ]] && {
+    docker build -f build/Dockerfile.obsolete -t $DOCKERIMGDEPR:latest .
+    [ -n "$KEEPLOG" ] && echo $DOCKERIMGDEPR:latest >> $KEEPLOG
+  }
+  ! [[ "$1" =~ ^deprecated$   ]] && {
+    echo $VERSION > VERSION
+    docker build -f build/Dockerfile -t $DOCKERIMG:$VERSION   -t $DOCKERIMG:latest .
+    rm VERSION
+    [ -n "$KEEPLOG" ] && {
+      echo $DOCKERIMG:$VERSION >> $KEEPLOG
+      echo $DOCKERIMG:latest   >> $KEEPLOG
+    }
+  }
 }
 
 storeNotebook () {
@@ -31,5 +43,12 @@ store () {
   storeWorkspaceSettings
 }
 
+[ -n "$1" ] && ! [[ "$1" =~ ^all|deprecated$ ]] && echo "\
+Usage: $0 [all|deprecated]
+
+  all           build also deprecated image
+  deprecated    build deprecated image only
+" && exit 1
+
 store
-build
+build "$@"

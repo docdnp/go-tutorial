@@ -1,0 +1,3 @@
+FROM alpine:latest
+
+ENTRYPOINT [ "sh", "-c", "echo 'This image is deprecated!!!'; echo 'Call this instead:';echo 'docker run -it --rm -p 8888:8888 thednp/go-tutorial'" ]

@@ -33,34 +33,19 @@ runs:
       env:
         KEEPLOG: /tmp/IMAGE
       run: |
-        echo "Building containter image...";
+        echo "Building containter images...";
         export PATH=$PATH:${{ github.action_path }};
-        build/scripts/build \
-          || error "Building docker image failed."
+        build/scripts/build all || error "Building docker images failed."
       shell: bash
 
-    - name: Tag and push 
-      id: tag-and-push
+    - name: Push 
+      id: push
       env:
         IMAGE: /tmp/IMAGE
       run: |
-        echo "Pushing image...";
         export PATH=$PATH:${{ github.action_path }};
-        IMAGE=$(cat $IMAGE);
-        docker push $IMAGE \
-          || error "Pushing $IMAGE to docker registry failed."
-        [ -z "${{ inputs.tag }}" ] || {
-          NEWIMAGE=$(echo $IMAGE | sed 's/:.*/:'${{ inputs.tag }}'/');
-          docker tag $IMAGE $NEWIMAGE \
-            || error "Couldn't add tag for $IMAGE => $NEWIMAGE";
-          docker push $NEWIMAGE \
-            || error "Pushing $NEWIMAGE to docker registry failed."
-        }
-        [ -z "${{ inputs.push_also_tag }}" ] || {
-          NEWIMAGE=${{ inputs.push_also_tag }};
-          docker tag $IMAGE $NEWIMAGE \
-            || error "Couldn't add tag for $IMAGE => $NEWIMAGE";
-          docker push $NEWIMAGE \
-            || error "Pushing $NEWIMAGE to docker registry failed."
-        }
+        for img in $(cat $IMAGE) ; do
+          echo "Pushing image $img ...";
+          docker push $img || error "Pushing $img to docker registry failed."
+        done
       shell: bash
