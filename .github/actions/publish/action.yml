@@ -23,24 +23,11 @@ runs:
           || error "Login to docker registry failed."
       shell: bash
 
-    - name: Create 
+    - name: Create and push
       id: create
       env:
-        KEEPLOG: /tmp/IMAGES
         PATH:    /usr/bin:/bin:${{ github.action_path }}
       run: |
         echo "Building containter images...";
         ${{ inputs.custom_build_script }} || error "Building docker images failed."
-      shell: bash
-
-    - name: Push 
-      id: push
-      env:
-        IMAGE: /tmp/IMAGES
-        PATH:    /usr/bin:/bin:${{ github.action_path }}
-      run: |
-        for img in $(cat $IMAGE) ; do
-          echo "Pushing image $img ...";
-          docker push $img || error "Pushing $img to docker registry failed."
-        done
       shell: bash

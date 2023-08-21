@@ -3,37 +3,42 @@ PROJECT=go-tutorial
 DOCKERIMG=docker.io/thednp/go-tutorial
 DOCKERIMGDEPR=docker.io/thednp/gotutorial
 DOCKERCACHE=$DOCKERIMG-cache
+DOCKERBUILDER=$PROJECT
 TUTORIALNB=notebooks/GolangTutorial.ipynb
 GOPHERHOME=./$PROJECT.d
 GOPHERWORKSPACE=$GOPHERHOME/.jupyter/lab/workspaces
 BUILDWORKSPACE=build/config/home.jupyter.lab/workspaces
 VERSION=$(date +v%y.%j.%H%M)
-set -x
+
+docker-buildx-create () {
+  docker buildx ls | grep ^. | grep ^$DOCKERBUILDER >&/dev/null \
+    || docker buildx create --name $DOCKERBUILDER --use --driver=docker-container
+}
+
+docker-buildx-build () {
+  docker buildx build \
+    --cache-from "type=registry,ref=$DOCKERCACHE" \
+    $([ "$2" == "write-cache" ] && echo --cache-to "type=registry,ref=$DOCKERCACHE") \
+    --output "type=image,name=$DOCKERIMG:$1,push=true" \
+    -f build/Dockerfile .
+}
+
 build () { 
   [[ "$1" =~ ^all|deprecated$ ]] && {
     docker build -f build/Dockerfile.obsolete -t $DOCKERIMGDEPR:latest .
-    [ -n "$KEEPLOG" ] && echo $DOCKERIMGDEPR:latest >> $KEEPLOG
+    docker push $DOCKERIMGDEPR:latest
   }
   ! [[ "$1" =~ ^deprecated$ ]] && {
     echo $VERSION > VERSION
     if [ "$2" == "buildx" ] ; then
-      docker buildx create --use --driver=docker-container
-      docker buildx build \
-          --cache-from "type=registry,ref=$DOCKERCACHE" \
-          --cache-to "type=registry,ref=$DOCKERCACHE" \
-          --output "type=image, name=$DOCKERIMG:latest,push=false" \
-          -f build/Dockerfile .
-      [[ "$1" =~ ^all|with-version$ ]] && docker tag $DOCKERIMG:latest $DOCKERIMG:$VERSION
+      docker-buildx-create
+      docker-buildx-build latest write-cache
+      [[ "$1" =~ ^all|with-version$ ]] && docker-buildx-build $VERSION
     else
       docker build -f build/Dockerfile  -t $DOCKERIMG:latest \
         $([[ "$1" =~ "^all|with-version$" ]] && echo -t $DOCKERIMG:$VERSION || echo -n "") .
     fi
     rm VERSION
-    [ -z "$KEEPLOG" ] || {
-      [[ "$1" =~ ^all|with-version$ ]] && \
-        echo $DOCKERIMG:$VERSION >> $KEEPLOG
-        echo $DOCKERIMG:latest   >> $KEEPLOG
-    }
   }
 }
 
@@ -60,9 +65,9 @@ store () {
   && echo "\
 Usage: $0 [all|deprecated|with-version] [buildx]
 
-  all          [buildx]  build also deprecated image
-  with-version [buildx]  build main image also with version tag
-  deprecated             build deprecated image only
+  all          [buildx]  build and push also deprecated image
+  with-version [buildx]  build and push main image also with version tag
+  deprecated             build and push deprecated image only
   buildx                 use registry cache
 " && exit 1
 
