@@ -1,14 +1,35 @@
 #!/usr/bin/env bash
 PROJECT=go-tutorial
+TUTORIALNB=notebooks/GolangTutorial.ipynb
+BUILDWORKSPACE=build/config/home.jupyter.lab/workspaces
 DOCKERIMG=docker.io/thednp/go-tutorial
 DOCKERIMGDEPR=docker.io/thednp/gotutorial
 DOCKERCACHE=$DOCKERIMG-cache
 DOCKERBUILDER=$PROJECT
-TUTORIALNB=notebooks/GolangTutorial.ipynb
 GOPHERHOME=./$PROJECT.d
 GOPHERWORKSPACE=$GOPHERHOME/.jupyter/lab/workspaces
-BUILDWORKSPACE=build/config/home.jupyter.lab/workspaces
 VERSION=$(date +v%y.%j.%H%M)
+BUILD_VERSION=false
+BUILD_DEPRECATED=false
+BUILD_USE_CACHE=false
+BUILD_PUSH=false
+CURL=curl
+JQ=jq
+PATH=$PWD/.tools:$PATH
+
+# Check and fix preconditions where possible
+installed () { command -v "$1" >&/dev/null; }
+installed docker || { echo "Error: docker missing, see: https://docs.docker.com/engine/install"; exit 1; }
+installed $CURL  || CURL="docker run -i --rm curlimages/curl"
+installed $JQ    || {
+  echo "Installing '$JQ' locally under: .tools/$JQ"
+  mkdir -p .tools
+  $CURL -s https://jqlang.github.io/jq/download/ \
+    | grep -Eoi 'https.*jq-'$(uname)'[^\"]+' \
+    | sort | tail -1 \
+    | xargs $CURL -o /dev/stdout --progress-bar -L > .tools/jq \
+    && chmod +x .tools/jq
+} 
 
 docker-buildx-create () {
   docker buildx ls | grep ^. | grep ^$DOCKERBUILDER >&/dev/null \
@@ -16,37 +37,41 @@ docker-buildx-create () {
 }
 
 docker-buildx-build () {
+  local tag=${1:-latest} write_cache=${2:-false} push=${3:-false}
   docker buildx build \
     --cache-from "type=registry,ref=$DOCKERCACHE" \
-    $([ "$2" == "write-cache" ] && echo --cache-to "type=registry,ref=$DOCKERCACHE") \
-    --output "type=image,name=$DOCKERIMG:$1,push=true" \
+    $($write_cache && echo --cache-to "type=registry,ref=$DOCKERCACHE") \
+    --output "type=image,name=$DOCKERIMG:$1,push=$push" \
     -f build/Dockerfile .
 }
 
-build () { 
-  [[ "$1" =~ ^all|deprecated$ ]] && {
+build () {
+  $BUILD_DEPRECATED && {
     docker build -f build/Dockerfile.obsolete -t $DOCKERIMGDEPR:latest .
-    docker push $DOCKERIMGDEPR:latest
+    $BUILD_PUSH && docker push $DOCKERIMGDEPR:latest
   }
-  ! [[ "$1" =~ ^deprecated$ ]] && {
+  $BUILD_VERSION && {
     echo $VERSION > VERSION
-    if [ "$2" == "buildx" ] ; then
+    if $BUILD_USE_CACHE ; then
       docker-buildx-create
-      docker-buildx-build latest write-cache
-      [[ "$1" =~ ^all|with-version$ ]] && docker-buildx-build $VERSION
+      docker-buildx-build latest true $BUILD_PUSH
+      $build_version && docker-buildx-build $VERSION $BUILD_PUSH
     else
       docker build -f build/Dockerfile  -t $DOCKERIMG:latest \
         $([[ "$1" =~ "^all|with-version$" ]] && echo -t $DOCKERIMG:$VERSION || echo -n "") .
+      $BUILD_PUSH && {
+        docker push $DOCKERIMG:latest
+        docker push $DOCKERIMG:$VERSION
+      }
     fi
     rm VERSION
   }
 }
 
 storeNotebook () {
-  command -v jq >&/dev/null \
-    && [ -e $GOPHERHOME/$TUTORIALNB ] \
-      && cat $GOPHERHOME/$TUTORIALNB \
-         | jq '.cells[] |= del(.outputs,.execution_count)' | tee $TUTORIALNB >&/dev/null
+  [ -e $GOPHERHOME/$TUTORIALNB ] \
+    && cat $GOPHERHOME/$TUTORIALNB \
+        | jq '.cells[] |= del(.outputs,.execution_count)' | tee $TUTORIALNB >&/dev/null
 }
 
 storeWorkspaceSettings () {
@@ -59,17 +84,31 @@ store () {
   storeWorkspaceSettings
 }
 
-[ -n "$1" ] \
-  && ! { [[ "$1" =~ ^deprecated$       ]] && [ -z "$2" ] ; } \
-  && ! { [[ "$1" =~ ^all|with-version$ ]] && [[ "$2" =~ ^buildx$ ]] ; } \
-  && echo "\
-Usage: $0 [all|deprecated|with-version] [buildx]
+exiterr () { [ -n "$@" ] && echo "Error: $@"
+echo "\
+Usage: $0 [all|deprecated|with-version] [--use-cache|--push]
 
-  all          [buildx]  build and push also deprecated image
-  with-version [buildx]  build and push main image also with version tag
-  deprecated             build and push deprecated image only
-  buildx                 use registry cache
-" && exit 1
+  all          [--use-cache|--push]  build also deprecated image
+  with-version [--use-cache|--push]  build main image also with version tag
+  deprecated   [--push]              build deprecated image only
+  --use-cache                        use registry cache
+  --use-push                         push after building
+" && exit 1; }
+
+subopts () { while [ -n "$1" ] ; do case "$1" in
+  --use-cache)  shift; BUILD_USE_CACHE=true;;
+  --push)       shift; BUILD_PUSH=true;;
+  *)            exiterr "unknown option: $1";;
+esac; done; }
+
+while [ -n "$1" ] ; do case "$1" in
+  deprecated)   shift; BUILD_DEPRECATED=true; subopts "$@"; $BUILD_PUSH && shift;;
+  with-version) shift; BUILD_VERSION=true   ; subopts "$@"; shift; shift;;
+  all)          shift; BUILD_DEPRECATED=true; BUILD_VERSION=true; subopts "$@"; shift; shift;;
+  *)            exiterr "unknown option: $1";;
+esac; done
+
+[ -z "$1" ] && BUILD_VERSION=true
 
 store
-build "$@"
+build

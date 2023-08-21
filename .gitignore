@@ -3,4 +3,5 @@ go.work
 backup
 go-tutorial
 go-tutorial.d
+.tools
 VERSION
