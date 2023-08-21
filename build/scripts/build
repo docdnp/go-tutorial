@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 PROJECT=go-tutorial
-DOCKERIMG=thednp/go-tutorial
-DOCKERIMGDEPR=thednp/gotutorial
+DOCKERIMG=docker.io/thednp/go-tutorial
+DOCKERIMGDEPR=docker.io/thednp/gotutorial
 DOCKERCACHE=$DOCKERIMG-cache
 TUTORIALNB=notebooks/GolangTutorial.ipynb
 GOPHERHOME=./$PROJECT.d
@@ -23,15 +23,16 @@ build () {
           --cache-to "type=registry,ref=$DOCKERCACHE" \
           --output "type=image, name=$DOCKERIMG:latest,push=false" \
           -f build/Dockerfile .
-      [[ "$1" =~ "^all|version$" ]] && docker tag $DOCKERIMG:latest $DOCKERIMG:$VERSION
+      [[ "$1" =~ ^all|with-version$ ]] && docker tag $DOCKERIMG:latest $DOCKERIMG:$VERSION
     else
       docker build -f build/Dockerfile  -t $DOCKERIMG:latest \
-        $([ -n "$1" ] && echo -t $DOCKERIMG:$VERSION || echo -n "") .
+        $([[ "$1" =~ "^all|with-version$" ]] && echo -t $DOCKERIMG:$VERSION || echo -n "") .
     fi
     rm VERSION
     [ -z "$KEEPLOG" ] || {
-      echo $DOCKERIMG:$VERSION >> $KEEPLOG
-      echo $DOCKERIMG:latest   >> $KEEPLOG
+      [[ "$1" =~ ^all|with-version$ ]] && \
+        echo $DOCKERIMG:$VERSION >> $KEEPLOG
+        echo $DOCKERIMG:latest   >> $KEEPLOG
     }
   }
 }
