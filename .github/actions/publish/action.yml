@@ -41,6 +41,6 @@ runs:
       run: |
         for img in $(cat $IMAGE) ; do
           echo "Pushing image $img ...";
-          docker buildx push $img || error "Pushing $img to docker registry failed."
+          docker push $img || error "Pushing $img to docker registry failed."
         done
       shell: bash
