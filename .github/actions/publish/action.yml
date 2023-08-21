@@ -23,11 +23,6 @@ runs:
           || error "Login to docker registry failed."
       shell: bash
 
-    - name: Create Docker Cacha Storage Backend
-      run: |
-        docker buildx create --use --driver=docker-container
-      shell: bash
-    
     - name: Create 
       id: create
       env:

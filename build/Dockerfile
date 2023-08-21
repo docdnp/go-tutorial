@@ -118,7 +118,6 @@ ADD build/scripts/goexample                              /usr/local/bin
 ADD build/scripts/go-tutorial                            /usr/local/bin
 ADD build/scripts/entry                                  /usr/local/bin
 ADD build/scripts/url                                    /usr/local/bin
-ADD VERSION                                              /etc/VERSION
 ADD build/config/go-language-server-implementation.json  /usr/etc/jupyter/jupyter_server_config.d/go-language-server-implementation.json
 
 ## Setup user "gopher" configuration:
@@ -130,11 +129,12 @@ ADD build/config/home.jupyter.lab                         /home/gopher/.jupyter/
 ADD build/config/home.local.share.jupyter.kernels.gonb    /home/gopher/.local/share/jupyter/kernels/gonb
 
 ## Prepare environment for user "gopher"
-RUN chown -R gopher.gopher /home/gopher
-USER gopher:gopher
 ENV     GOPATH  /home/gopher/go
 ENV     PATH    /go/bin:/home/gopher/go/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 WORKDIR         /home/gopher
+ADD     VERSION /etc/VERSION
+RUN chown -R gopher.gopher /home/gopher
+USER gopher:gopher
 
 ## Prepare network and CLI access to this image
 EXPOSE 8888/tcp

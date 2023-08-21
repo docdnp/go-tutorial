@@ -2,29 +2,32 @@
 PROJECT=go-tutorial
 DOCKERIMG=thednp/go-tutorial
 DOCKERIMGDEPR=thednp/gotutorial
+DOCKERCACHE=$DOCKERIMG-cache
 TUTORIALNB=notebooks/GolangTutorial.ipynb
 GOPHERHOME=./$PROJECT.d
 GOPHERWORKSPACE=$GOPHERHOME/.jupyter/lab/workspaces
 BUILDWORKSPACE=build/config/home.jupyter.lab/workspaces
 VERSION=$(date +v%y.%j.%H%M)
 
-pull () {
-  local img="$1"
-  for opt in "$@" ; do [ "$opt" == "--pull" ] && { docker pull $img; return; } ; done
-}
-
 build () { 
   [[ "$1" =~ ^all|deprecated$ ]] && {
-    pull $DOCKERIMGDEPR:latest $2
     docker build -f build/Dockerfile.obsolete -t $DOCKERIMGDEPR:latest .
     [ -n "$KEEPLOG" ] && echo $DOCKERIMGDEPR:latest >> $KEEPLOG
   }
   ! [[ "$1" =~ ^deprecated$ ]] && {
-    pull $DOCKERIMG:latest $1 $2
-
     echo $VERSION > VERSION
-    docker build -f build/Dockerfile  -t $DOCKERIMG:latest \
-      $([ -n "$1" ] && echo -t $DOCKERIMG:$VERSION || echo -n "") .
+    if [ "$2" == "buildx" ] ; then
+      docker buildx create --use --driver=docker-container
+      docker buildx build \
+          --cache-from "type=registry,ref=$DOCKERCACHE" \
+          --cache-to "type=registry,ref=$DOCKERCACHE" \
+          --output "type=image, name=$DOCKERIMG:latest,push=false" \
+          -f build/Dockerfile .
+      [[ "$1" =~ "^all|version$" ]] && docker tag $DOCKERIMG:latest $DOCKERIMG:$VERSION
+    else
+      docker build -f build/Dockerfile  -t $DOCKERIMG:latest \
+        $([ -n "$1" ] && echo -t $DOCKERIMG:$VERSION || echo -n "") .
+    fi
     rm VERSION
     [ -z "$KEEPLOG" ] || {
       echo $DOCKERIMG:$VERSION >> $KEEPLOG
@@ -50,13 +53,16 @@ store () {
   storeWorkspaceSettings
 }
 
-[ -n "$1" ] && ! [[ "$1" =~ ^all|deprecated|with-version$|^--pull$ ]] && echo "\
-Usage: $0 [all|deprecated|with-version] [--pull]
+[ -n "$1" ] \
+  && ! { [[ "$1" =~ ^deprecated$       ]] && [ -z "$2" ] ; } \
+  && ! { [[ "$1" =~ ^all|with-version$ ]] && [[ "$2" =~ ^buildx$ ]] ; } \
+  && echo "\
+Usage: $0 [all|deprecated|with-version] [buildx]
 
-  all           build also deprecated image
-  deprecated    build deprecated image only
-  with-version  build main image also with version tag
-  --pull        pull images before creation (can be used with or without command)
+  all          [buildx]  build also deprecated image
+  with-version [buildx]  build main image also with version tag
+  deprecated             build deprecated image only
+  buildx                 use registry cache
 " && exit 1
 
 store
