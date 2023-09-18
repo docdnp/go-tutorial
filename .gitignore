@@ -5,3 +5,4 @@ go-tutorial
 go-tutorial.d
 .tools
 VERSION
+build/Dockerfile.split

@@ -41,6 +41,8 @@ start-docker-local-includes () {
             -v $GOPHERHOME/notebooks:/home/gopher/notebooks \
             -v $GOPHERHOME/.local/share/jupyter:/home/gopher/.local/share/jupyter \
             -v $GOPHERHOME/.jupyter/lab:/home/gopher/.jupyter/lab \
+            -v $GOPHERHOME/etc.passwd:/etc/passwd \
+            -v $GOPHERHOME/etc.group:/etc/group \
                $DOCKERIMG start >&/dev/null \
     || restart "$@"
     echo "Mounted local home directory: $GOPHERHOME"
@@ -48,8 +50,11 @@ start-docker-local-includes () {
 }
 
 init-local () {
+  local MYUID=$(id -u) GID=$(id -g)
   mkdir -p ./$GOPHERHOME/notebooks && {
     echo -n "Create temporary container: $DOCKERNAME: " \
+    && sed -re 's/1000:1000/'$MYUID:$MYUID'/' build/config/etc.passwd > $GOPHERHOME/etc.passwd \
+    && sed -re 's/:1000:/:'$GID':/' build/config/etc.group > $GOPHERHOME/etc.group \
     && docker create $DOCKERUSER --name $DOCKERNAME $DOCKERIMG 2>&1 \
       && echo Copying files... \
       && docker cp -aq $DOCKERNAME:/home/gopher/.jupyter  ./$GOPHERHOME \
@@ -66,10 +71,11 @@ init-local () {
 rm-local () { rm -rf $GOPHERHOME; }
 
 restart () {
+    [ "$1" == "--docker" ] && local suffix="-docker"
     read -p "Restart? [Enter=yes/n] " restart
     [ -z "$restart" ] && {
       echo "Restarting..." 
-      stop "$@"; sleep 1
+      stop "$@"; while docker ps | grep $DOCKERNAME$suffix >&/dev/null ; do sleep 1; done; sleep 1
       exec -a $PROJECT "$0" start "$@"
     }
 }
@@ -82,14 +88,14 @@ start () {
 }
 
 stop  () { 
-  local container=${1:-DOCKERNAME}
+  local container=${1:-$DOCKERNAME}
   [ $container == "--docker" ] && container=$DOCKERNAME-docker
   docker kill $container >&/dev/null && echo "Stopped $container"
   [ $container == "$DOCKERNAME" ] && rm -rf $GOPHERHOME/.local/share/jupyter/runtime
 }
 
 call  () { 
-  local mode="$1" cmd="$2" container=${3:-DOCKERNAME}
+  local mode="$1" cmd="$2" container=${3:-$DOCKERNAME}
   [ $container == "--docker" ] && container=$DOCKERNAME-docker
   $mode docker exec -it $container "$cmd"
 }

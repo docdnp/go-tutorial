@@ -101,7 +101,6 @@ RUN apk update \
     && echo -e "gopher\ngopher" | passwd gopher \
     #! clean
     && apk del jupyter.builddeps \
-    && apk cache clean \
     && pip3 cache purge \
     && go clean -cache \
     && rm -rf /root/.[acpw]* ipaexg00301* /var/cache/apk/* /go/src \
@@ -114,6 +113,7 @@ RUN apk update \
 ADD build/config/etc.profile                             /etc/profile
 ADD build/config/etc.bashrc                              /etc/bash/bashrc
 ADD build/config/etc.doas.conf                           /etc/doas.d/doas.conf
+ADD build/scripts/change-home-owner                      /usr/local/bin
 ADD build/scripts/goexample                              /usr/local/bin
 ADD build/scripts/go-tutorial                            /usr/local/bin
 ADD build/scripts/entry                                  /usr/local/bin
@@ -133,7 +133,7 @@ ENV     GOPATH  /home/gopher/go
 ENV     PATH    /go/bin:/home/gopher/go/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 WORKDIR         /home/gopher
 ADD     VERSION /etc/VERSION
-RUN chown -R gopher.gopher /home/gopher
+RUN chown -R gopher.gopher /home/gopher; chmod og-w /etc/doas.d/doas.conf
 USER gopher:gopher
 
 ## Prepare network and CLI access to this image

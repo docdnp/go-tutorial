@@ -6,6 +6,7 @@ DOCKERIMG=docker.io/thednp/go-tutorial
 DOCKERIMGDEPR=docker.io/thednp/gotutorial
 DOCKERCACHE=$DOCKERIMG-cache
 DOCKERBUILDER=$PROJECT
+DOCKERFILE=build/Dockerfile
 GOPHERHOME=./$PROJECT.d
 GOPHERWORKSPACE=$GOPHERHOME/.jupyter/lab/workspaces
 VERSION=$(date +v%y.%j.%H%M)
@@ -42,7 +43,7 @@ docker-buildx-build () {
     --cache-from "type=registry,ref=$DOCKERCACHE" \
     $($write_cache && echo --cache-to "type=registry,ref=$DOCKERCACHE") \
     --output "type=image,name=$DOCKERIMG:$1,push=$push" \
-    -f build/Dockerfile .
+    -f $DOCKERFILE .
 }
 
 build () {
@@ -57,7 +58,7 @@ build () {
       docker-buildx-build latest true $BUILD_PUSH
       $build_version && docker-buildx-build $VERSION $BUILD_PUSH
     else
-      docker build -f build/Dockerfile  -t $DOCKERIMG:latest \
+      docker build -f $DOCKERFILE  -t $DOCKERIMG:latest \
         $([[ "$1" =~ "^all|with-version$" ]] && echo -t $DOCKERIMG:$VERSION || echo -n "") .
       $BUILD_PUSH && {
         docker push $DOCKERIMG:latest
@@ -86,16 +87,19 @@ store () {
 
 exiterr () { [ -n "$@" ] && echo "Error: $@"
 echo "\
-Usage: $0 [all|deprecated|with-version] [--use-cache|--push]
+Usage: $0 [all|deprecated|with-version] [--use-cache|--push|--use-split]
 
-  all          [--use-cache|--push]  build also deprecated image
-  with-version [--use-cache|--push]  build main image also with version tag
-  deprecated   [--push]              build deprecated image only
-  --use-cache                        use registry cache
-  --use-push                         push after building
+  all          [--use-cache|--push|--use-split]  build also deprecated image
+  with-version [--use-cache|--push|--use-split]  build main image also with version tag
+  deprecated   [--push]                          build deprecated image only
+  --use-cache                                    use registry cache
+  --use-push                                     push after building
+  --use-split                                    split $DOCKERFILE RUN command to multiple 
+                                                 steps (for debugging)
 " && exit 1; }
 
 subopts () { while [ -n "$1" ] ; do case "$1" in
+  --use-split)  shift; cat $DOCKERFILE | build/scripts/dockerfile-split > $DOCKERFILE.split; DOCKERFILE=$DOCKERFILE.split;;
   --use-cache)  shift; BUILD_USE_CACHE=true;;
   --push)       shift; BUILD_PUSH=true;;
   *)            exiterr "unknown option: $1";;

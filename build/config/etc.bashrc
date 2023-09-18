@@ -2,7 +2,7 @@
 
 shopt -s checkwinsize
 
-PS1='\[\033[01;32m\]\u@gonotebook\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]$ '
+PS1='\[\033[01;32m\]\u@go-tutorial\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]$ '
 
 . /etc/bash/bash_completion.sh
 
