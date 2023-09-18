@@ -55,7 +55,7 @@ build () {
     echo $VERSION > VERSION
     if $BUILD_USE_CACHE ; then
       docker-buildx-create
-      docker-buildx-build latest true $BUILD_PUSH $($BUILD_VERSION && echo -t=$VERSION)
+      docker-buildx-build latest true $BUILD_PUSH $($BUILD_VERSION && echo -t=$DOCKERIMG:$VERSION)
     else
       docker build -f $DOCKERFILE  -t $DOCKERIMG:latest \
         $([[ "$1" =~ "^all|with-version$" ]] && echo -t $DOCKERIMG:$VERSION || echo -n "") .
