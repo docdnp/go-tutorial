@@ -38,12 +38,12 @@ docker-buildx-create () {
 }
 
 docker-buildx-build () {
-  local tag=${1:-latest} write_cache=${2:-false} push=${3:-false} opt=$4
+  local write_cache=${1:-false} push=${2:-false} opt=$3
   docker buildx build \
     --cache-from "type=registry,ref=$DOCKERCACHE" \
     $($write_cache && echo --cache-to "type=registry,ref=$DOCKERCACHE") \
-    --output "type=image,name=$DOCKERIMG:$1,push=$push" \
-    -f $DOCKERFILE $opt .
+    --output "type=image,push=$push" -t $DOCKERIMG:latest $opt \
+    -f $DOCKERFILE .
 }
 
 build () {
@@ -55,7 +55,7 @@ build () {
     echo $VERSION > VERSION
     if $BUILD_USE_CACHE ; then
       docker-buildx-create
-      docker-buildx-build latest true $BUILD_PUSH $($BUILD_VERSION && echo -t=$DOCKERIMG:$VERSION)
+      docker-buildx-build true $BUILD_PUSH $($BUILD_VERSION && echo -t=$DOCKERIMG:$VERSION)
     else
       docker build -f $DOCKERFILE  -t $DOCKERIMG:latest \
         $([[ "$1" =~ "^all|with-version$" ]] && echo -t $DOCKERIMG:$VERSION || echo -n "") .
