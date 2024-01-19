@@ -6,6 +6,7 @@ DOCKERIMG=docker.io/thednp/go-tutorial
 DOCKERIMGDEPR=docker.io/thednp/gotutorial
 DOCKERCACHE=$DOCKERIMG-cache
 DOCKERBUILDER=$PROJECT
+DOCKERBUILDOPTS='--network=host'
 DOCKERFILE=build/Dockerfile
 GOPHERHOME=./$PROJECT.d
 GOPHERWORKSPACE=$GOPHERHOME/.jupyter/lab/workspaces
@@ -33,13 +34,14 @@ installed $JQ    || {
 } 
 
 docker-buildx-create () {
+  local DRIVER_OPTS=$(echo $DOCKERBUILDOPTS | sed -re 's|--|--driver-opt=|g')
   docker buildx ls | grep ^. | grep ^$DOCKERBUILDER >&/dev/null \
-    || docker buildx create --name $DOCKERBUILDER --use --driver=docker-container
+    || docker buildx create $DRIVER_OPTS --name $DOCKERBUILDER --use --driver=docker-container
 }
 
 docker-buildx-build () {
   local write_cache=${1:-false} push=${2:-false} opt=$3
-  docker buildx build \
+  docker buildx build  \
     --cache-from "type=registry,ref=$DOCKERCACHE" \
     $($write_cache && echo --cache-to "type=registry,ref=$DOCKERCACHE") \
     --output "type=image,push=$push" -t $DOCKERIMG:latest $opt \
@@ -57,7 +59,7 @@ build () {
       docker-buildx-create
       docker-buildx-build true $BUILD_PUSH $($BUILD_VERSION && echo -t=$DOCKERIMG:$VERSION)
     else
-      docker build -f $DOCKERFILE  -t $DOCKERIMG:latest \
+      docker build $DOCKERBUILDOPTS -f $DOCKERFILE  -t $DOCKERIMG:latest \
         $([[ "$1" =~ "^all|with-version$" ]] && echo -t $DOCKERIMG:$VERSION || echo -n "") .
       $BUILD_PUSH && {
         docker push $DOCKERIMG:latest
