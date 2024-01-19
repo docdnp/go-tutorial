@@ -49,6 +49,7 @@ docker-buildx-build () {
 }
 
 build () {
+  local RETURN_CODE=0
   $BUILD_DEPRECATED && {
     docker build -f build/Dockerfile.obsolete -t $DOCKERIMGDEPR:latest .
     $BUILD_PUSH && docker push $DOCKERIMGDEPR:latest
@@ -56,17 +57,19 @@ build () {
   $BUILD_VERSION && {
     echo $VERSION > VERSION
     if $BUILD_USE_CACHE ; then
-      docker-buildx-create
-      docker-buildx-build true $BUILD_PUSH $($BUILD_VERSION && echo -t=$DOCKERIMG:$VERSION)
+      docker-buildx-create && \
+        docker-buildx-build true $BUILD_PUSH $($BUILD_VERSION && echo -t=$DOCKERIMG:$VERSION)
     else
       docker build $DOCKERBUILDOPTS -f $DOCKERFILE  -t $DOCKERIMG:latest \
-        $([[ "$1" =~ "^all|with-version$" ]] && echo -t $DOCKERIMG:$VERSION || echo -n "") .
+        $([[ "$1" =~ "^all|with-version$" ]] && echo -t $DOCKERIMG:$VERSION || echo -n "") . && \
       $BUILD_PUSH && {
         docker push $DOCKERIMG:latest
         docker push $DOCKERIMG:$VERSION
       }
     fi
+    RETURN_CODE=$?
     rm VERSION
+    return $RETURN_CODE
   }
 }
 
