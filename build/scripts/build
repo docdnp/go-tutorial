@@ -42,7 +42,7 @@ docker-buildx-create () {
 docker-buildx-build () {
   local write_cache=${1:-false} push=${2:-false} opt=$3
   docker buildx build  \
-    --cache-from "type=registry,ref=$DOCKERCACHE" \
+    --cache-from "type=registry,ref=$DOCKERCACHE" --attest type=provenance,mode=min \
     $($write_cache && echo --cache-to "type=registry,ref=$DOCKERCACHE") \
     --output "type=image,push=$push" -t $DOCKERIMG:latest $opt \
     -f $DOCKERFILE .
