@@ -6,6 +6,7 @@ on:
     branches: [ main ]
     paths-ignore:
       - '.github/workflows/*'
+      - '.gitignore'
   schedule:
     - cron: '0 0 * * *' # This line schedules the workflow to run once per day
 jobs:
@@ -18,8 +19,8 @@ jobs:
       - name: Set custom build script
         id: vars
         run: |
-          [ "${{ github.event_name }}" == "push" ] && PUSH=--push
-          echo "::set-output name=custom_build_script::build/scripts/build with-version --use-cache $PUSH"
+          [ "${{ github.event_name }}" == "push" ] && BUILD_OPTS="--push --use-cache"
+          echo "::set-output name=custom_build_script::build/scripts/build with-version $BUILD_OPTS"
 
       - name: Publish docker image
         uses: ./.github/actions/publish
