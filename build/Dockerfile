@@ -137,7 +137,7 @@ ENV     GOPATH  /home/gopher/go
 ENV     PATH    /go/bin:/home/gopher/go/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 WORKDIR         /home/gopher
 ADD VERSION /etc/VERSION
-RUN chown -R gopher.gopher /home/gopher; chmod og-w /etc/doas.d/doas.conf; false
+RUN chown -R gopher.gopher /home/gopher; chmod og-w /etc/doas.d/doas.conf
 USER gopher:gopher
 
 ## Prepare network and CLI access to this image
