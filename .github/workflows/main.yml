@@ -1,9 +1,11 @@
 name: Publish docker images on docker hub
 run-name: Publishing docker images
-# on:
-#   release:
-#     types: [published]
-on: push
+
+on:
+  push:
+    branches: [ main ]
+  schedule:
+    - cron: '0 0 * * *' # This line schedules the workflow to run once per day
 jobs:
   Build-and-publish-for-amd64:
     runs-on: ubuntu-latest
