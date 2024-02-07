@@ -1,6 +1,8 @@
 # gotutorial
 
-[![Publish docker images on docker hub](https://github.com/docdnp/go-tutorial/actions/workflows/main.yml/badge.svg)](https://github.com/docdnp/go-tutorial/actions/workflows/main.yml)
+[![Published Docker Release](https://github.com/docdnp/go-tutorial/actions/workflows/build-and-push.yml/badge.svg)](https://github.com/docdnp/go-tutorial/actions/workflows/build-and-push.yml)
+[![CodeQL](https://github.com/docdnp/go-tutorial/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/docdnp/go-tutorial/actions/workflows/github-code-scanning/codeql)
+[![Build tested](https://github.com/docdnp/go-tutorial/actions/workflows/test-build.yml/badge.svg)](https://github.com/docdnp/go-tutorial/actions/workflows/test-build.yml)
 
 An interactive tutorial for go on basis of Jupyter Notebooks and gonb.
 
