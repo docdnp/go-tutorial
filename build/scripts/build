@@ -14,6 +14,7 @@ VERSION=$(date +v%y.%j.%H%M)
 BUILD_VERSION=false
 BUILD_DEPRECATED=false
 BUILD_USE_CACHE=false
+BUILD_USE_BUILDX=false
 BUILD_PUSH=false
 CURL=curl
 JQ=jq
@@ -40,10 +41,12 @@ docker-buildx-create () {
 }
 
 docker-buildx-build () {
-  local write_cache=${1:-false} push=${2:-false} opt=$3
+  local write_cache=${1:-false} push=${2:-false} read_cache=${3:-true} opt=$4
   docker buildx build  \
-    --cache-from "type=registry,ref=$DOCKERCACHE" --attest type=provenance,mode=min \
-    $($write_cache && echo --cache-to "type=registry,ref=$DOCKERCACHE") \
+    $($read_cache    && echo --cache-from "type=registry,ref=$DOCKERCACHE") \
+    $($write_cache   && echo --cache-to   "type=registry,ref=$DOCKERCACHE") \
+    $(! $read_cache  && ! $write_cache && echo --no-cache) \
+    --attest type=provenance,mode=min \
     --output "type=image,push=$push" -t $DOCKERIMG:latest $opt \
     -f $DOCKERFILE .
 }
@@ -56,9 +59,9 @@ build () {
   }
   $BUILD_VERSION && {
     echo $VERSION > VERSION
-    if $BUILD_USE_CACHE ; then
+    if $BUILD_USE_BUILDX ; then
       docker-buildx-create && \
-        docker-buildx-build true $BUILD_PUSH $($BUILD_VERSION && echo -t=$DOCKERIMG:$VERSION)
+        docker-buildx-build $BUILD_USE_CACHE $BUILD_PUSH $BUILD_USE_CACHE $($BUILD_VERSION && echo -t=$DOCKERIMG:$VERSION)
     else
       docker build $DOCKERBUILDOPTS -f $DOCKERFILE  -t $DOCKERIMG:latest \
         $([[ "$1" =~ "^all|with-version$" ]] && echo -t $DOCKERIMG:$VERSION || echo -n "") . && \
@@ -96,7 +99,8 @@ Usage: $0 [all|deprecated|with-version] [--use-cache|--push|--use-split]
   all          [--use-cache|--push|--use-split]  build also deprecated image
   with-version [--use-cache|--push|--use-split]  build main image also with version tag
   deprecated   [--push]                          build deprecated image only
-  --use-cache                                    use registry cache
+  --use-cache                                    use registry cache (enforces --use-buildx)
+  --use-buildx                                   use buildx builder (basis for caching)
   --use-push                                     push after building
   --use-split                                    split $DOCKERFILE RUN command to multiple 
                                                  steps (for debugging)
@@ -104,7 +108,8 @@ Usage: $0 [all|deprecated|with-version] [--use-cache|--push|--use-split]
 
 subopts () { while [ -n "$1" ] ; do case "$1" in
   --use-split)  shift; cat $DOCKERFILE | build/scripts/dockerfile-split > $DOCKERFILE.split; DOCKERFILE=$DOCKERFILE.split;;
-  --use-cache)  shift; BUILD_USE_CACHE=true;;
+  --use-cache)  shift; BUILD_USE_BUILDX=true; BUILD_USE_CACHE=true;;
+  --use-buildx) shift; BUILD_USE_BUILDX=true;;
   --push)       shift; BUILD_PUSH=true;;
   *)            exiterr "unknown option: $1";;
 esac; done; }
