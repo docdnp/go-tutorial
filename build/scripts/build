@@ -12,7 +12,6 @@ GOPHERHOME=./$PROJECT.d
 GOPHERWORKSPACE=$GOPHERHOME/.jupyter/lab/workspaces
 VERSION=$(date +v%y.%j.%H%M)
 BUILD_VERSION=false
-BUILD_DEPRECATED=false
 BUILD_USE_CACHE=false
 BUILD_USE_BUILDX=false
 BUILD_PUSH=false
@@ -53,27 +52,21 @@ docker-buildx-build () {
 
 build () {
   local RETURN_CODE=0
-  $BUILD_DEPRECATED && {
-    docker build -f build/Dockerfile.obsolete -t $DOCKERIMGDEPR:latest .
-    $BUILD_PUSH && docker push $DOCKERIMGDEPR:latest
-  }
-  $BUILD_VERSION && {
-    echo $VERSION > VERSION
-    if $BUILD_USE_BUILDX ; then
-      docker-buildx-create && \
-        docker-buildx-build $BUILD_USE_CACHE $BUILD_PUSH $BUILD_USE_CACHE $($BUILD_VERSION && echo -t=$DOCKERIMG:$VERSION)
-    else
-      docker build $DOCKERBUILDOPTS -f $DOCKERFILE  -t $DOCKERIMG:latest \
-        $([[ "$1" =~ "^all|with-version$" ]] && echo -t $DOCKERIMG:$VERSION || echo -n "") . && \
-      $BUILD_PUSH && {
-        docker push $DOCKERIMG:latest
-        docker push $DOCKERIMG:$VERSION
-      }
-    fi
-    RETURN_CODE=$?
-    rm VERSION
-    return $RETURN_CODE
-  }
+  echo $VERSION > VERSION
+  if $BUILD_USE_BUILDX ; then
+    docker-buildx-create && \
+      docker-buildx-build $BUILD_USE_CACHE $BUILD_PUSH $BUILD_USE_CACHE $($BUILD_VERSION && echo -t=$DOCKERIMG:$VERSION)
+  else
+    docker build $DOCKERBUILDOPTS -f $DOCKERFILE  -t $DOCKERIMG:latest \
+      $([[ "$1" =~ "^all|with-version$" ]] && echo -t $DOCKERIMG:$VERSION || echo -n "") . && \
+    $BUILD_PUSH && {
+      docker push $DOCKERIMG:latest
+      docker push $DOCKERIMG:$VERSION
+    }
+  fi
+  RETURN_CODE=$?
+  rm VERSION
+  return $RETURN_CODE
 }
 
 storeNotebook () {
@@ -94,11 +87,9 @@ store () {
 
 exiterr () { [ -n "$@" ] && echo "Error: $@"
 echo "\
-Usage: $0 [all|deprecated|with-version] [--use-cache|--push|--use-split]
+Usage: $0 [Options]
 
-  all          [--use-cache|--push|--use-split]  build also deprecated image
-  with-version [--use-cache|--push|--use-split]  build main image also with version tag
-  deprecated   [--push]                          build deprecated image only
+  --use-version                                  auto-generate version tag
   --use-cache                                    use registry cache (enforces --use-buildx)
   --use-buildx                                   use buildx builder (basis for caching)
   --use-push                                     push after building
@@ -106,22 +97,14 @@ Usage: $0 [all|deprecated|with-version] [--use-cache|--push|--use-split]
                                                  steps (for debugging)
 " && exit 1; }
 
-subopts () { while [ -n "$1" ] ; do case "$1" in
-  --use-split)  shift; cat $DOCKERFILE | build/scripts/dockerfile-split > $DOCKERFILE.split; DOCKERFILE=$DOCKERFILE.split;;
-  --use-cache)  shift; BUILD_USE_BUILDX=true; BUILD_USE_CACHE=true;;
-  --use-buildx) shift; BUILD_USE_BUILDX=true;;
-  --push)       shift; BUILD_PUSH=true;;
-  *)            exiterr "unknown option: $1";;
-esac; done; }
-
 while [ -n "$1" ] ; do case "$1" in
-  deprecated)   shift; BUILD_DEPRECATED=true; subopts "$@"; $BUILD_PUSH && shift;;
-  with-version) shift; BUILD_VERSION=true   ; subopts "$@"; shift; shift;;
-  all)          shift; BUILD_DEPRECATED=true; BUILD_VERSION=true; subopts "$@"; shift; shift;;
-  *)            exiterr "unknown option: $1";;
+  --use-split)    shift; cat $DOCKERFILE | build/scripts/dockerfile-split > $DOCKERFILE.split; DOCKERFILE=$DOCKERFILE.split;;
+  --use-cache)    shift; BUILD_USE_BUILDX=true; BUILD_USE_CACHE=true;;
+  --use-version)  shift; BUILD_VERSION=true;;
+  --use-buildx)   shift; BUILD_USE_BUILDX=true;;
+  --push)         shift; BUILD_PUSH=true;;
+  *)              exiterr "unknown option: $1";;
 esac; done
-
-[ -z "$1" ] && BUILD_VERSION=true
 
 store
 build
