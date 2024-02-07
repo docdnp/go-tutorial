@@ -3,10 +3,10 @@ run-name: Testing build (scheduled)
 
 on:
   schedule:
-    - cron: '13 23 * * *' # This line schedules the workflow to run once per day
+    - cron: '26 23 * * *' # This line schedules the workflow to run once per day
 
 jobs:
-  Build-and-publish-for-amd64:
+  Build-for-amd64:
     runs-on: ubuntu-latest
 
     steps:
