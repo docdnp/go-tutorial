@@ -19,6 +19,6 @@ jobs:
       - name: Publish docker image
         uses: ./.github/actions/publish
         with:
-          custom_build_script: build/scripts/build with-version --push --use-cache
+          custom_build_script: build/scripts/build --use-version --use-cache --push
           docker_user:         ${{ secrets.DOCKER_USER }}
           docker_token:        ${{ secrets.DOCKER_TOKEN }}
