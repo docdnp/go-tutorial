@@ -3,7 +3,7 @@ run-name: Testing build (scheduled)
 
 on:
   schedule:
-    - cron: '26 23 * * *' # This line schedules the workflow to run once per day
+    - cron: '43 23 * * *' # This line schedules the workflow to run once per day
 
 jobs:
   Build-for-amd64:

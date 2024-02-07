@@ -1,7 +1,6 @@
 go.work
 .vscode
 backup
-go-tutorial
 go-tutorial.d
 .tools
 VERSION
