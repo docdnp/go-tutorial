@@ -4,6 +4,10 @@ inputs:
   custom_build_script:
     description: 'Custom build script to use for building docker images (must write created images to $KEEPLOG)'
     required: true
+  docker_registry:
+    description: 'Name of docker registry (default: docker.io).'
+    default: 'docker.io'
+    required: false
   docker_user:
     description: 'Username with push access to docker registry.'
     required: true
@@ -19,7 +23,7 @@ runs:
       run: |
         echo "Login to docker registry...";
         echo "${{ inputs.docker_token }}" \
-          | docker login -u "${{ inputs.docker_user }}" --password-stdin \
+          | docker login -u "${{ inputs.docker_user }}" --password-stdin ${{ inputs.docker_registry }} \
           || error "Login to docker registry failed."
       shell: bash
 

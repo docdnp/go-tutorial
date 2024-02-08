@@ -1,4 +1,4 @@
-name: Publish docker images on docker hub
+name: Publish docker images
 run-name: Publishing docker images
 
 on:
@@ -9,7 +9,8 @@ on:
       - '.gitignore'
 
 jobs:
-  Build-and-publish-for-amd64:
+  Docker-Hub-Publish:
+    name: DockerHub Publish (amd64)
     runs-on: ubuntu-latest
 
     steps:
@@ -22,3 +23,19 @@ jobs:
           custom_build_script: build/scripts/build --use-version --use-cache --push
           docker_user:         ${{ secrets.DOCKER_USER }}
           docker_token:        ${{ secrets.DOCKER_TOKEN }}
+
+  GHCR-Publish:
+    name: GHCR Publish (amd64)
+    runs-on: ubuntu-latest
+    needs: [Docker-Hub-Publish]
+
+    steps:
+      - name: Retag docker image
+        run: |
+          echo ${{ secrets.GH_TOKEN }} | docker login -u ${{ secrets.GH_USER }} --password-stdin ghcr.io
+          VERSION=$(docker run --rm -i thednp/go-tutorial:latest version)
+          docker tag thednp/go-tutorial:latest ghcr.io/${{ github.repository }}:latest
+          docker tag thednp/go-tutorial:latest ghcr.io/${{ github.repository }}:${VERSION}
+          docker push ghcr.io/${{ github.repository }}:latest
+          docker push ghcr.io/${{ github.repository }}:${VERSION}
+

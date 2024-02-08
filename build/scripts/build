@@ -3,7 +3,6 @@ PROJECT=go-tutorial
 TUTORIALNB=notebooks/GolangTutorial.ipynb
 BUILDWORKSPACE=build/config/home.jupyter.lab/workspaces
 DOCKERIMG=docker.io/thednp/go-tutorial
-DOCKERIMGDEPR=docker.io/thednp/gotutorial
 DOCKERCACHE=$DOCKERIMG-cache
 DOCKERBUILDER=$PROJECT
 DOCKERBUILDOPTS='--network=host'
@@ -89,11 +88,13 @@ exiterr () { [ -n "$@" ] && echo "Error: $@"
 echo "\
 Usage: $0 [Options]
 
-  --use-version                                  auto-generate version tag
-  --use-cache                                    use registry cache (enforces --use-buildx)
-  --use-buildx                                   use buildx builder (basis for caching)
-  --use-push                                     push after building
-  --use-split                                    split $DOCKERFILE RUN command to multiple 
+  Options
+    --image <image>                                set image name (default: $DOCKERIMG)
+    --use-version                                  auto-generate version tag
+    --use-cache                                    use registry cache (enforces --use-buildx)
+    --use-buildx                                   use buildx builder (basis for caching)
+    --use-push                                     push after building
+    --use-split                                    split $DOCKERFILE RUN command to multiple 
                                                  steps (for debugging)
 " && exit 1; }
 
@@ -102,6 +103,7 @@ while [ -n "$1" ] ; do case "$1" in
   --use-cache)    shift; BUILD_USE_BUILDX=true; BUILD_USE_CACHE=true;;
   --use-version)  shift; BUILD_VERSION=true;;
   --use-buildx)   shift; BUILD_USE_BUILDX=true;;
+  --image)        shift; DOCKERIMG=$1; DOCKERCACHE=$DOCKERIMG-cache; shift;;
   --push)         shift; BUILD_PUSH=true;;
   *)              exiterr "unknown option: $1";;
 esac; done
