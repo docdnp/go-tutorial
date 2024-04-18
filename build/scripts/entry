@@ -32,7 +32,7 @@ EOF
 
 entry () {
   sudo change-home-owner $UID $(id -g)
-  jupyter lab --no-browser --ip=0.0.0.0 >&/dev/null 
+  jupyter lab --no-browser --ip=0.0.0.0 >&/dev/null &
   local pid=$!
   url; wait $pid
 }
