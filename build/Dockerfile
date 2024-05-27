@@ -1,4 +1,4 @@
-FROM alpine:3.19
+FROM alpine:3.20
 
 # Install Jupyter and gophernotes.
 RUN apk update \
