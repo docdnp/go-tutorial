@@ -1,11 +1,11 @@
-FROM alpine:3.20
+FROM golang:1.23.0-alpine3.20
 
 # Install Jupyter and gophernotes.
 RUN apk update \
     ## -------------------------------------------------------------------------------
     ## Install Jupyter's build dependencies as virtual package
     ## (the virtual package will be removed from the image)
-    && ALPINE_VERSION=$(cat /etc/alpine-release | sed -re s/\.0$//) \
+    && ALPINE_VERSION=$(cat /etc/alpine-release | sed -re s/\.[0-9]$//) \
     && ALPINE_REPO=http://dl-4.alpinelinux.org/alpine/v$ALPINE_VERSION \
     && apk add \
     --repository $ALPINE_REPO/community\
@@ -35,11 +35,11 @@ RUN apk update \
     ## -------------------------------------------------------------------------------
     ## Install all permanent tools and runtime environments
     ## (these will remain in the image)
-    && ALPINE_VERSION=$(cat /etc/alpine-release | sed -re s/\.0$//) \
+    && ALPINE_VERSION=$(cat /etc/alpine-release | sed -re s/\.[0-9]$//) \
     && ALPINE_REPO=http://dl-4.alpinelinux.org/alpine/v$ALPINE_VERSION \
     && apk \
-    --repository http://dl-4.alpinelinux.org/alpine/v$(cat /etc/alpine-release | sed -re s/\.0$//)/community\
-    --repository http://dl-4.alpinelinux.org/alpine/v$(cat /etc/alpine-release | sed -re s/\.0$//)/main \
+    --repository $ALPINE_REPO/community\
+    --repository $ALPINE_REPO/main \
     --arch=x86_64 add \
     python3 \
     ca-certificates \
@@ -53,7 +53,6 @@ RUN apk update \
     perl \
     bash-completion \
     doas-sudo-shim \
-    go \
     ## -------------------------------------------------------------------------------
     ## go tools
     ##    * gocomplete      bash completion for golang
