@@ -1,4 +1,4 @@
-FROM golang:1.23.0-alpine3.20
+FROM golang:1.23.1-alpine3.20
 
 # Install Jupyter and gophernotes.
 RUN apk update \
